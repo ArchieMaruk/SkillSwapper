@@ -1,10 +1,15 @@
 package org.setu.skillswapper
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import timber.log.Timber
 
@@ -13,8 +18,41 @@ class AddEditActivity : AppCompatActivity() {
     private lateinit var wantedInput: EditText
     private lateinit var offeredInput: EditText
     private lateinit var locationInput: EditText
+    private lateinit var imagePreview: ImageView
+    private lateinit var pinnedLocationText: TextView
 
     private var editingId: Long? = null
+    private var selectedImage: String = ""                          // "" means no image
+    private var selectedLatitude: Double? = null                    //  null means no pin
+    private var selectedLongitude: Double? = null
+
+    // Opens the phone's file picker and gets back the chosen image
+    private val imagePicker =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri != null) {
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: SecurityException) {
+                    // Some image sources don't allow this, which is fine
+                }
+
+                selectedImage = uri.toString()
+                imagePreview.setImageURI(uri)
+            }
+        }
+
+    // opens the map screen and gets back the chosen coordinates
+    private val mapPicker =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data ?: return@registerForActivityResult
+                selectedLatitude = data.getDoubleExtra("latitude", 0.0)
+                selectedLongitude = data.getDoubleExtra("longitude", 0.0)
+                showPinnedLocation()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,12 +61,38 @@ class AddEditActivity : AppCompatActivity() {
         wantedInput = findViewById(R.id.wantedInput)
         offeredInput = findViewById(R.id.offeredInput)
         locationInput = findViewById(R.id.locationInput)
+        // Must be found before loadExistingSwap runs, or editing a swap with an image crashes
+        imagePreview = findViewById(R.id.imagePreview)
+        pinnedLocationText = findViewById(R.id.pinnedLocationText)  // NEW: same reason
 
         editingId = intent.getLongExtra("id", -1L).takeIf { it != -1L }
 
         if (editingId != null) {
             findViewById<TextView>(R.id.formTitle).text = "Edit Swap"
             loadExistingSwap(editingId!!)
+        }
+
+        // NEW: open the map, starting at the current pin if there is one
+        findViewById<Button>(R.id.pickLocationButton).setOnClickListener {
+            val intent = Intent(this, MapPickerActivity::class.java)
+            val lat = selectedLatitude
+            val lon = selectedLongitude
+            if (lat != null && lon != null) {
+                intent.putExtra("latitude", lat)
+                intent.putExtra("longitude", lon)
+            }
+            mapPicker.launch(intent)
+        }
+
+        // Open the picker, showing only images
+        findViewById<Button>(R.id.pickImageButton).setOnClickListener {
+            imagePicker.launch(arrayOf("image/*"))
+        }
+
+        // Clear the image, then Save to remove it from the swap
+        findViewById<Button>(R.id.removeImageButton).setOnClickListener {
+            selectedImage = ""                      // Marks swap as having no image
+            imagePreview.setImageDrawable(null)     // Clears preview so we can see that it's gone
         }
 
         findViewById<Button>(R.id.saveButton).setOnClickListener { saveSwap() }
@@ -47,6 +111,28 @@ class AddEditActivity : AppCompatActivity() {
         wantedInput.setText(swap.skillWanted)
         offeredInput.setText(swap.skillOffered)
         locationInput.setText(swap.location)
+
+        // Show the saved image, if there is one
+        if (swap.image.isNotEmpty()) {
+            selectedImage = swap.image
+            imagePreview.setImageURI(Uri.parse(swap.image))
+        }
+
+        // load the saved pin, if there is one
+        selectedLatitude = swap.latitude
+        selectedLongitude = swap.longitude
+        showPinnedLocation()
+    }
+
+    // show the pinned coordinates under the Pick on Map button
+    private fun showPinnedLocation() {
+        val lat = selectedLatitude
+        val lon = selectedLongitude
+        pinnedLocationText.text = if (lat != null && lon != null) {
+            "Pinned: %.5f, %.5f".format(lat, lon)
+        } else {
+            "No location pinned"
+        }
     }
 
     private fun saveSwap() {
@@ -69,13 +155,28 @@ class AddEditActivity : AppCompatActivity() {
 
         if (editingId == null) {
             AppData.swaps.create(
-                SkillSwapModel(skillWanted = wanted, skillOffered = offered, location = location)
+                SkillSwapModel(
+                    skillWanted = wanted,
+                    skillOffered = offered,
+                    location = location,
+                    image = selectedImage,
+                    latitude = selectedLatitude,
+                    longitude = selectedLongitude
+                )
             )
             Timber.d("Created swap: $wanted for $offered")
             Toast.makeText(this, "Swap created", Toast.LENGTH_SHORT).show()
         } else {
             AppData.swaps.update(
-                SkillSwapModel(id = editingId!!, skillWanted = wanted, skillOffered = offered, location = location)
+                SkillSwapModel(
+                    id = editingId!!,
+                    skillWanted = wanted,
+                    skillOffered = offered,
+                    location = location,
+                    image = selectedImage,
+                    latitude = selectedLatitude,
+                    longitude = selectedLongitude
+                )
             )
             Timber.d("Updated swap id=$editingId")
             Toast.makeText(this, "Swap updated", Toast.LENGTH_SHORT).show()
