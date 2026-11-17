@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import timber.log.Timber
+import android.net.Uri
+import android.widget.ImageView
 
 class SwapAdapter(
     private var swaps: List<SkillSwapModel>,
@@ -16,6 +18,8 @@ class SwapAdapter(
         val wantedText: TextView = itemView.findViewById(R.id.wantedText)
         val offeredText: TextView = itemView.findViewById(R.id.offeredText)
         val locationText: TextView = itemView.findViewById(R.id.locationText)
+
+        val swapImage: ImageView = itemView.findViewById(R.id.swapImage)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SwapViewHolder {
@@ -30,6 +34,16 @@ class SwapAdapter(
         holder.wantedText.text = "Wants: ${swap.skillWanted}"
         holder.offeredText.text = "Offers: ${swap.skillOffered}"
         holder.locationText.text = "Location: ${swap.location}"
+
+
+
+        //Show the image, or hide the box if  there isn't one
+        if(swap.image.isNotEmpty()){
+            holder.swapImage.setImageURI(Uri.parse(swap.image))
+            holder.swapImage.visibility = View.VISIBLE
+        } else{
+            holder.swapImage.visibility = View.GONE
+        }
 
         // Tap the whole card to edit
         holder.itemView.setOnClickListener {
