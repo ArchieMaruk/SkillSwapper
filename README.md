@@ -5,6 +5,9 @@ An Android app for swapping skills instead of paying for them. Built in Kotlin f
 ## Features
 
 - Add, edit and delete swaps (skill wanted, skill offered, location)
+- Tap a swap to edit it, long press to delete (with confirmation)
+- Optional image on each swap
+- Pick a swap's location on a map, with a mini map preview
 - My Lists screen with search
 - Bottom navigation bar
 - Dark mode, saved in Settings
@@ -21,7 +24,8 @@ An Android app for swapping skills instead of paying for them. Built in Kotlin f
 - **v0.1.0** – Bottom navigation bar and theme
 - **v0.2.0** – Dark mode
 - **v0.3.0** – Search
-- **v0.4.0** - Timber Logging / Long press deletion
+- **v0.4.0** – Tap to edit, long press to delete, Timber logging
+- **v0.6.0** – Swap images and map picker
 
 ## Planned
 
