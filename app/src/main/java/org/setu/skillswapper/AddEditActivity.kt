@@ -12,6 +12,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import timber.log.Timber
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 
 class AddEditActivity : AppCompatActivity() {
 
@@ -19,7 +24,9 @@ class AddEditActivity : AppCompatActivity() {
     private lateinit var offeredInput: EditText
     private lateinit var locationInput: EditText
     private lateinit var imagePreview: ImageView
-    private lateinit var pinnedLocationText: TextView
+    private lateinit var miniMap: MapView
+    private var miniMarker: Marker? = null
+
 
     private var editingId: Long? = null
     private var selectedImage: String = ""            // "" means no image
@@ -43,19 +50,25 @@ class AddEditActivity : AppCompatActivity() {
             }
         }
 
-    // Opens the map screen and gets back the chosen coordinates
+    // Opens the map screen and puts the chosen coordinates in the location box
     private val mapPicker =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val data = result.data ?: return@registerForActivityResult
-                selectedLatitude = data.getDoubleExtra("latitude", 0.0)
-                selectedLongitude = data.getDoubleExtra("longitude", 0.0)
-                showPinnedLocation()
+                val lat = data.getDoubleExtra("latitude", 0.0)
+                val lon = data.getDoubleExtra("longitude", 0.0)
+
+                selectedLatitude = lat
+                selectedLongitude = lon
+                locationInput.setText("%.5f, %.5f".format(lat, lon))
+                showMiniMap()
             }
+
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Configuration.getInstance().userAgentValue = packageName
         setContentView(R.layout.activity_add_edit)
 
         wantedInput = findViewById(R.id.wantedInput)
@@ -63,13 +76,19 @@ class AddEditActivity : AppCompatActivity() {
         locationInput = findViewById(R.id.locationInput)
         // Must be found before loadExistingSwap runs, or editing a swap crashes
         imagePreview = findViewById(R.id.imagePreview)
-        pinnedLocationText = findViewById(R.id.pinnedLocationText)
+        // Small preview map: shows the pin, but can't be dragged
+        miniMap = findViewById(R.id.miniMap)
+        miniMap.setTileSource(TileSourceFactory.MAPNIK)
+        miniMap.setMultiTouchControls(false)
+        miniMap.setOnTouchListener { _, _ -> true }   // Swallows touches so it can't be moved
+        miniMap.controller.setZoom(16.0)
 
         editingId = intent.getLongExtra("id", -1L).takeIf { it != -1L }
 
         if (editingId != null) {
             findViewById<TextView>(R.id.formTitle).text = "Edit Swap"
             loadExistingSwap(editingId!!)
+            showMiniMap()
         }
 
         // Open the map, starting at the current pin if there is one
@@ -121,19 +140,47 @@ class AddEditActivity : AppCompatActivity() {
         // Load the saved pin, if there is one
         selectedLatitude = swap.latitude
         selectedLongitude = swap.longitude
-        showPinnedLocation()
     }
 
-    // Show the pinned coordinates under the Pick on Map button
-    private fun showPinnedLocation() {
+
+
+    // Show the mini map with a pin, if a location has been picked
+    private fun showMiniMap() {
         val lat = selectedLatitude
         val lon = selectedLongitude
-        pinnedLocationText.text = if (lat != null && lon != null) {
-            "Pinned: %.5f, %.5f".format(lat, lon)
-        } else {
-            "No location pinned"
+        if (lat == null || lon == null) return
+
+        val point = GeoPoint(lat, lon)
+        miniMap.visibility = android.view.View.VISIBLE
+        miniMap.controller.setCenter(point)
+
+        if (miniMarker == null) {
+            miniMarker = Marker(miniMap).apply {
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            }
+            miniMap.overlays.add(miniMarker)
         }
+        miniMarker?.position = point
+        miniMap.invalidate()
     }
+
+
+
+
+
+    override fun onResume() {
+        super.onResume()
+        miniMap.onResume()
+    }
+
+    override fun onPause() {
+        miniMap.onPause()
+        super.onPause()
+    }
+
+
+
+
 
     private fun saveSwap() {
         val wanted = wantedInput.text.toString().trim()
