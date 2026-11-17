@@ -19,7 +19,7 @@ class SettingsActivity : AppCompatActivity() {
         darkModeSwitch.isChecked = prefs.getBoolean("dark_mode", false)
 
         // When the switch is flipped: save the choice, then change the theme
-        darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+        darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->   //_ is telling android to ignore this because its the switch itself
             prefs.edit().putBoolean("dark_mode", isChecked).apply()
 
             if (isChecked) {

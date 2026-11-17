@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.SkillSwapper" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.SkillSwapper" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Main colour -->
         <item name="colorPrimary">@color/swap_blue</item>
         <item name="colorPrimaryVariant">@color/swap_purple</item>

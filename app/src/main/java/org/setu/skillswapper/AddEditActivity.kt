@@ -22,8 +22,8 @@ class AddEditActivity : AppCompatActivity() {
     private lateinit var pinnedLocationText: TextView
 
     private var editingId: Long? = null
-    private var selectedImage: String = ""                          // "" means no image
-    private var selectedLatitude: Double? = null                    //  null means no pin
+    private var selectedImage: String = ""            // "" means no image
+    private var selectedLatitude: Double? = null      // null means no pin
     private var selectedLongitude: Double? = null
 
     // Opens the phone's file picker and gets back the chosen image
@@ -43,7 +43,7 @@ class AddEditActivity : AppCompatActivity() {
             }
         }
 
-    // opens the map screen and gets back the chosen coordinates
+    // Opens the map screen and gets back the chosen coordinates
     private val mapPicker =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -61,9 +61,9 @@ class AddEditActivity : AppCompatActivity() {
         wantedInput = findViewById(R.id.wantedInput)
         offeredInput = findViewById(R.id.offeredInput)
         locationInput = findViewById(R.id.locationInput)
-        // Must be found before loadExistingSwap runs, or editing a swap with an image crashes
+        // Must be found before loadExistingSwap runs, or editing a swap crashes
         imagePreview = findViewById(R.id.imagePreview)
-        pinnedLocationText = findViewById(R.id.pinnedLocationText)  // NEW: same reason
+        pinnedLocationText = findViewById(R.id.pinnedLocationText)
 
         editingId = intent.getLongExtra("id", -1L).takeIf { it != -1L }
 
@@ -72,7 +72,7 @@ class AddEditActivity : AppCompatActivity() {
             loadExistingSwap(editingId!!)
         }
 
-        // NEW: open the map, starting at the current pin if there is one
+        // Open the map, starting at the current pin if there is one
         findViewById<Button>(R.id.pickLocationButton).setOnClickListener {
             val intent = Intent(this, MapPickerActivity::class.java)
             val lat = selectedLatitude
@@ -118,13 +118,13 @@ class AddEditActivity : AppCompatActivity() {
             imagePreview.setImageURI(Uri.parse(swap.image))
         }
 
-        // load the saved pin, if there is one
+        // Load the saved pin, if there is one
         selectedLatitude = swap.latitude
         selectedLongitude = swap.longitude
         showPinnedLocation()
     }
 
-    // show the pinned coordinates under the Pick on Map button
+    // Show the pinned coordinates under the Pick on Map button
     private fun showPinnedLocation() {
         val lat = selectedLatitude
         val lon = selectedLongitude

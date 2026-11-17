@@ -24,8 +24,9 @@ class SkillSwapMemStore {
             foundSwap.skillWanted = swap.skillWanted
             foundSwap.skillOffered = swap.skillOffered
             foundSwap.location = swap.location
+            foundSwap.image = swap.image
+            foundSwap.latitude = swap.latitude
             foundSwap.longitude = swap.longitude
-            foundSwap.latitude = swap.longitude
             Timber.d("Store: updated swap id=${swap.id}")
             true
         } else {

@@ -7,5 +7,5 @@ data class SkillSwapModel(
     var location: String,
     var image: String = "",
     var latitude: Double? = null,
-    var longitude: Double? = null  //null means that no spot has been pinned yet, so map pins stays optional
+    var longitude: Double? = null
 )

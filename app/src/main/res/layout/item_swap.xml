@@ -12,7 +12,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp">#
+
+
+        <ImageView
+            android:id="@+id/swapImage"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Swap image"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />    <!-- hides it by default so swaps with no image dont just leave a giant empty space -->
 
         <TextView
             android:id="@+id/wantedText"
